@@ -1,0 +1,46 @@
+name: Deploy AWS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+   
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+    
+    - name: Install dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal
+
+    - name: Publish
+      run: dotnet publish -c Release -o '${{ github.workspace }}/out'
+  
+    - name: Zip Package
+      run: |
+        cd ${{ github.workspace }}/out 
+        zip -r ${{ github.workspace }}/out.zip *
+
+    - name: Deploy to EB
+      uses: einaregilsson/beanstalk-deploy@v13
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: demovideo
+        environment_name: demovideo-dev
+        region: us-east-2
+        version_label: ${{ github.run_id }}
+        version_description: ${{ github.sha }}
+        deployment_package: ${{ github.workspace }}/out.zip
