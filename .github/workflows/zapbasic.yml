@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ZAP Scan
+        uses: zaproxy/action-baseline@v0.4.0
+        with:
+          target: 'http://demovideo-dev.eba-5etrpdsa.us-east-2.elasticbeanstalk.com'
